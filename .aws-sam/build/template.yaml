@@ -1,0 +1,200 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: incident-platform
+Transform:
+- AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Architectures:
+    - x86_64
+    MemorySize: 128
+    Timeout: 15
+    LoggingConfig:
+      LogFormat: JSON
+    Environment:
+      Variables:
+        POWERTOOLS_SERVICE_NAME: incident-platform
+Resources:
+  IncidentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-incidents
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: incidentId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: incidentId
+        KeyType: HASH
+  AlertsDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName:
+        Fn::Sub: ${AWS::StackName}-alerts-dlq
+  AlertsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName:
+        Fn::Sub: ${AWS::StackName}-alerts-queue
+      RedrivePolicy:
+        deadLetterTargetArn:
+          Fn::GetAtt:
+          - AlertsDLQ
+          - Arn
+        maxReceiveCount: 3
+  NotificationsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName:
+        Fn::Sub: ${AWS::StackName}-notifications
+  AlertsIngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: AlertsIngestFunction
+      Handler: alerts-ingest.handler
+      Description: Receives alerts and pushes them to SQS for async processing
+      Policies:
+      - SQSSendMessagePolicy:
+          QueueName:
+            Fn::GetAtt:
+            - AlertsQueue
+            - QueueName
+      Environment:
+        Variables:
+          ALERTS_QUEUE_URL:
+            Ref: AlertsQueue
+          NODE_OPTIONS: ' --enable-source-maps'
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /alerts
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - src/handlers/alerts-ingest.ts
+        Minify: true
+        Sourcemap: true
+        Target: es2020
+      SamResourceId: AlertsIngestFunction
+  AlertsProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: AlertsProcessorFunction
+      Handler: alerts-processor.handler
+      Description: Consumes alerts from SQS, creates incidents in DynamoDB, notifies
+        via SNS
+      Policies:
+      - DynamoDBWritePolicy:
+          TableName:
+            Ref: IncidentsTable
+      - SNSPublishMessagePolicy:
+          TopicName:
+            Fn::GetAtt:
+            - NotificationsTopic
+            - TopicName
+      Environment:
+        Variables:
+          INCIDENTS_TABLE_NAME:
+            Ref: IncidentsTable
+          NOTIFICATIONS_TOPIC_ARN:
+            Ref: NotificationsTopic
+          NODE_OPTIONS: ' --enable-source-maps'
+      Events:
+        AlertsQueueEvent:
+          Type: SQS
+          Properties:
+            Queue:
+              Fn::GetAtt:
+              - AlertsQueue
+              - Arn
+            BatchSize: 5
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - src/handlers/alerts-processor.ts
+        Minify: true
+        Sourcemap: true
+        Target: es2020
+      SamResourceId: AlertsProcessorFunction
+  GetIncidentsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: GetIncidentsFunction
+      Handler: get-incidents.handler
+      Description: Lists incidents from DynamoDB
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: IncidentsTable
+      Environment:
+        Variables:
+          INCIDENTS_TABLE_NAME:
+            Ref: IncidentsTable
+          NODE_OPTIONS: ' --enable-source-maps'
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /incidents
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - src/handlers/get-incidents.ts
+        Minify: true
+        Sourcemap: true
+        Target: es2020
+      SamResourceId: GetIncidentsFunction
+  UpdateIncidentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: UpdateIncidentFunction
+      Handler: update-incident.handler
+      Description: Acknowledge or resolve an incident
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: IncidentsTable
+      Environment:
+        Variables:
+          INCIDENTS_TABLE_NAME:
+            Ref: IncidentsTable
+          NODE_OPTIONS: ' --enable-source-maps'
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /incidents/{id}
+            Method: PATCH
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - src/handlers/update-incident.ts
+        Minify: true
+        Sourcemap: true
+        Target: es2020
+      SamResourceId: UpdateIncidentFunction
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint base URL
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod
+  AlertsQueueUrl:
+    Description: SQS queue URL used by ingest function
+    Value:
+      Ref: AlertsQueue
+  NotificationsTopicArn:
+    Description: SNS topic ARN for notifications
+    Value:
+      Ref: NotificationsTopic
+  IncidentsTableName:
+    Description: DynamoDB table name for incidents
+    Value:
+      Ref: IncidentsTable

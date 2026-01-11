@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: incident-platform
+Transform:
+  - AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Runtime: nodejs20.x
+    Architectures:
+      - x86_64
+    MemorySize: 128
+    Timeout: 15
+    LoggingConfig:
+      LogFormat: JSON
+    Environment:
+      Variables:
+        POWERTOOLS_SERVICE_NAME: incident-platform
+
+Resources:
+  # ---------- Data ----------
+  IncidentsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}-incidents"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: incidentId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: incidentId
+          KeyType: HASH
+
+  # ---------- Messaging ----------
+  AlertsDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AWS::StackName}-alerts-dlq"
+
+  AlertsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub "${AWS::StackName}-alerts-queue"
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AlertsDLQ.Arn
+        maxReceiveCount: 3
+
+  NotificationsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${AWS::StackName}-notifications"
+
+  # ---------- API: POST /alerts -> SQS ----------
+  AlertsIngestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/alerts-ingest.handler
+      Description: Receives alerts and pushes them to SQS for async processing
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt AlertsQueue.QueueName
+      Environment:
+        Variables:
+          ALERTS_QUEUE_URL: !Ref AlertsQueue
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /alerts
+            Method: POST
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/alerts-ingest.ts
+
+  # ---------- Worker: SQS -> DynamoDB + SNS ----------
+  AlertsProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/alerts-processor.handler
+      Description: Consumes alerts from SQS, creates incidents in DynamoDB, notifies via SNS
+      Policies:
+        - DynamoDBWritePolicy:
+            TableName: !Ref IncidentsTable
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt NotificationsTopic.TopicName
+      Environment:
+        Variables:
+          INCIDENTS_TABLE_NAME: !Ref IncidentsTable
+          NOTIFICATIONS_TOPIC_ARN: !Ref NotificationsTopic
+      Events:
+        AlertsQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt AlertsQueue.Arn
+            BatchSize: 5
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/alerts-processor.ts
+
+  GetIncidentsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/get-incidents.handler
+      Description: Lists incidents from DynamoDB
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref IncidentsTable
+      Environment:
+        Variables:
+          INCIDENTS_TABLE_NAME: !Ref IncidentsTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /incidents
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/get-incidents.ts
+
+  UpdateIncidentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: .
+      Handler: src/handlers/update-incident.handler
+      Description: Acknowledge or resolve an incident
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IncidentsTable
+      Environment:
+        Variables:
+          INCIDENTS_TABLE_NAME: !Ref IncidentsTable
+      Events:
+        Api:
+          Type: Api
+          Properties: 
+            Path: /incidents/{id}
+            Method: PATCH
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: es2020
+        Sourcemap: true
+        EntryPoints:
+          - src/handlers/update-incident.ts
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint base URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod"
+
+  AlertsQueueUrl:
+    Description: SQS queue URL used by ingest function
+    Value: !Ref AlertsQueue
+
+  NotificationsTopicArn:
+    Description: SNS topic ARN for notifications
+    Value: !Ref NotificationsTopic
+
+  IncidentsTableName:
+    Description: DynamoDB table name for incidents
+    Value: !Ref IncidentsTable
