@@ -20,9 +20,24 @@ export const handler = async (event: any) => {
 
   // Pass lastKey as: encodeURIComponent(JSON.stringify(LastEvaluatedKey))
   const lastKeyRaw = qs.lastKey;
-  const exclusiveStartKey = lastKeyRaw
-    ? JSON.parse(decodeURIComponent(lastKeyRaw))
-    : undefined;
+
+    // Treat "", "null", "undefined" as “not provided”
+    let exclusiveStartKey: any = undefined;
+
+    if (lastKeyRaw && lastKeyRaw !== "null" && lastKeyRaw !== "undefined") {
+    try {
+        const parsed = JSON.parse(decodeURIComponent(lastKeyRaw));
+        if (parsed && typeof parsed === "object") {
+        exclusiveStartKey = parsed;
+        }
+    } catch {
+        // If lastKey is invalid, return 400 instead of 500
+        return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid lastKey" }),
+        };
+    }
+    }
 
   const filterParts: string[] = [];
   const names: Record<string, string> = {};
