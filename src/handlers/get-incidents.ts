@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = process.env.INCIDENTS_TABLE_NAME!;
@@ -10,63 +10,48 @@ function parseLimit(value: any, fallback = 20) {
   return Math.min(n, 100);
 }
 
+function parseLastKey(raw: any) {
+  if (!raw || raw === "null" || raw === "undefined") return undefined;
+  try {
+    const decoded = decodeURIComponent(raw);
+    const parsed = JSON.parse(decoded);
+    return parsed && typeof parsed === "object" ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export const handler = async (event: any) => {
   const qs = event?.queryStringParameters ?? {};
+  const limit = parseLimit(qs.limit, 20);
+  const exclusiveStartKey = parseLastKey(qs.lastKey);
 
-  const status = qs.status;
+  // Optional filters (applied after Query)
   const severity = qs.severity;
   const service = qs.service;
-  const limit = parseLimit(qs.limit, 20);
-
-  // Pass lastKey as: encodeURIComponent(JSON.stringify(LastEvaluatedKey))
-  const lastKeyRaw = qs.lastKey;
-
-    // Treat "", "null", "undefined" as “not provided”
-    let exclusiveStartKey: any = undefined;
-
-    if (lastKeyRaw && lastKeyRaw !== "null" && lastKeyRaw !== "undefined") {
-    try {
-        const parsed = JSON.parse(decodeURIComponent(lastKeyRaw));
-        if (parsed && typeof parsed === "object") {
-        exclusiveStartKey = parsed;
-        }
-    } catch {
-        // If lastKey is invalid, return 400 instead of 500
-        return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "Invalid lastKey" }),
-        };
-    }
-    }
 
   const filterParts: string[] = [];
-  const names: Record<string, string> = {};
-  const values: Record<string, any> = {};
-
-  if (status) {
-    names["#status"] = "status";
-    values[":status"] = status;
-    filterParts.push("#status = :status");
-  }
+  const values: Record<string, any> = { ":all": "ALL" };
 
   if (severity) {
     values[":severity"] = severity;
     filterParts.push("severity = :severity");
   }
-
   if (service) {
     values[":service"] = service;
     filterParts.push("service = :service");
   }
 
   const res = await ddb.send(
-    new ScanCommand({
+    new QueryCommand({
       TableName: tableName,
+      IndexName: "GSI1_AllByCreatedAt",
+      KeyConditionExpression: "gsi1pk = :all",
+      ExpressionAttributeValues: values,
+      FilterExpression: filterParts.length ? filterParts.join(" AND ") : undefined,
       Limit: limit,
       ExclusiveStartKey: exclusiveStartKey,
-      FilterExpression: filterParts.length ? filterParts.join(" AND ") : undefined,
-      ExpressionAttributeNames: Object.keys(names).length ? names : undefined,
-      ExpressionAttributeValues: Object.keys(values).length ? values : undefined,
+      ScanIndexForward: false, // NEWEST FIRST ✅
     })
   );
 
@@ -76,9 +61,6 @@ export const handler = async (event: any) => {
 
   return {
     statusCode: 200,
-    body: JSON.stringify({
-      items: res.Items ?? [],
-      lastKey: nextKey,
-    }),
+    body: JSON.stringify({ items: res.Items ?? [], lastKey: nextKey }),
   };
 };

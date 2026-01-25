@@ -26,9 +26,22 @@ Resources:
       AttributeDefinitions:
         - AttributeName: incidentId
           AttributeType: S
+        - AttributeName: createdAt
+          AttributeType: S
+        - AttributeName: gsi1pk
+          AttributeType: S
       KeySchema:
         - AttributeName: incidentId
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1_AllByCreatedAt
+          KeySchema:
+            - AttributeName: gsi1pk
+              KeyType: HASH
+            - AttributeName: createdAt
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
 
   # ---------- Messaging ----------
   AlertsDLQ:

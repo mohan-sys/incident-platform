@@ -19,6 +19,8 @@ export const handler = async (event: any) => {
 
     const item = {
       incidentId,
+      // GSI partition key to support querying "all incidents" ordered by createdAt
+      gsi1pk: "ALL",
       service: alert.service,
       severity: alert.severity,
       summary: alert.message,
