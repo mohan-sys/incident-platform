@@ -51,7 +51,7 @@ export const handler = async (event: any) => {
       FilterExpression: filterParts.length ? filterParts.join(" AND ") : undefined,
       Limit: limit,
       ExclusiveStartKey: exclusiveStartKey,
-      ScanIndexForward: false, // NEWEST FIRST ✅
+      ScanIndexForward: false, 
     })
   );
 
