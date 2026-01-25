@@ -28,6 +28,8 @@ Resources:
         AttributeType: S
       - AttributeName: gsi1pk
         AttributeType: S
+      - AttributeName: status
+        AttributeType: S
       KeySchema:
       - AttributeName: incidentId
         KeyType: HASH
@@ -35,6 +37,14 @@ Resources:
       - IndexName: GSI1_AllByCreatedAt
         KeySchema:
         - AttributeName: gsi1pk
+          KeyType: HASH
+        - AttributeName: createdAt
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      - IndexName: GSI2_StatusByCreatedAt
+        KeySchema:
+        - AttributeName: status
           KeyType: HASH
         - AttributeName: createdAt
           KeyType: RANGE

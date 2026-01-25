@@ -23,35 +23,55 @@ function parseLastKey(raw: any) {
 
 export const handler = async (event: any) => {
   const qs = event?.queryStringParameters ?? {};
+
+  const status = qs.status; // OPEN | RESOLVED (optional)
+  const severity = qs.severity;
+  const service = qs.service;
+
   const limit = parseLimit(qs.limit, 20);
   const exclusiveStartKey = parseLastKey(qs.lastKey);
 
   // Optional filters (applied after Query)
-  const severity = qs.severity;
-  const service = qs.service;
-
   const filterParts: string[] = [];
-  const values: Record<string, any> = { ":all": "ALL" };
+  const names: Record<string, string> = {};
+  const values: Record<string, any> = {};
 
   if (severity) {
     values[":severity"] = severity;
     filterParts.push("severity = :severity");
   }
+
   if (service) {
     values[":service"] = service;
     filterParts.push("service = :service");
   }
 
+  // Choose index based on query pattern
+  let IndexName: string;
+  let KeyConditionExpression: string;
+
+  if (status) {
+    IndexName = "GSI2_StatusByCreatedAt";
+    names["#status"] = "status";
+    values[":status"] = status;
+    KeyConditionExpression = "#status = :status";
+  } else {
+    IndexName = "GSI1_AllByCreatedAt";
+    values[":all"] = "ALL";
+    KeyConditionExpression = "gsi1pk = :all";
+  }
+
   const res = await ddb.send(
     new QueryCommand({
       TableName: tableName,
-      IndexName: "GSI1_AllByCreatedAt",
-      KeyConditionExpression: "gsi1pk = :all",
+      IndexName,
+      KeyConditionExpression,
+      ExpressionAttributeNames: Object.keys(names).length ? names : undefined,
       ExpressionAttributeValues: values,
       FilterExpression: filterParts.length ? filterParts.join(" AND ") : undefined,
       Limit: limit,
       ExclusiveStartKey: exclusiveStartKey,
-      ScanIndexForward: false, 
+      ScanIndexForward: false, // newest first
     })
   );
 
