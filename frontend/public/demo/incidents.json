@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "incidentId": "demo-1",
+      "service": "payments-api",
+      "severity": "CRITICAL",
+      "summary": "5xx spike detected",
+      "status": "OPEN",
+      "source": "demo",
+      "createdAt": "2026-01-26T10:00:00.000Z",
+      "acknowledgedAt": null,
+      "resolvedAt": null
+    }
+  ],
+  "lastKey": null
+}
