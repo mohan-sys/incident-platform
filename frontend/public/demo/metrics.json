@@ -1,0 +1,9 @@
+{
+  "windowDays": 7,
+  "totalIncidents": 12,
+  "openIncidents": 3,
+  "resolvedIncidents": 9,
+  "avgMTTASeconds": 180,
+  "avgMTTRSeconds": 900,
+  "bySeverity": { "CRITICAL": 2, "HIGH": 4, "MEDIUM": 4, "LOW": 2 }
+}
