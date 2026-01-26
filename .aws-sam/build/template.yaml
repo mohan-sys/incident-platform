@@ -24,9 +24,32 @@ Resources:
       AttributeDefinitions:
       - AttributeName: incidentId
         AttributeType: S
+      - AttributeName: createdAt
+        AttributeType: S
+      - AttributeName: gsi1pk
+        AttributeType: S
+      - AttributeName: status
+        AttributeType: S
       KeySchema:
       - AttributeName: incidentId
         KeyType: HASH
+      GlobalSecondaryIndexes:
+      - IndexName: GSI1_AllByCreatedAt
+        KeySchema:
+        - AttributeName: gsi1pk
+          KeyType: HASH
+        - AttributeName: createdAt
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
+      - IndexName: GSI2_StatusByCreatedAt
+        KeySchema:
+        - AttributeName: status
+          KeyType: HASH
+        - AttributeName: createdAt
+          KeyType: RANGE
+        Projection:
+          ProjectionType: ALL
   AlertsDLQ:
     Type: AWS::SQS::Queue
     Properties:
@@ -151,6 +174,36 @@ Resources:
         Sourcemap: true
         Target: es2020
       SamResourceId: GetIncidentsFunction
+  GetMetricsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: GetMetricsFunction
+      Handler: get-metrics.handler
+      Description: Aggregates incident metrics (MTTA, MTTR, counts)
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: IncidentsTable
+      Environment:
+        Variables:
+          INCIDENTS_TABLE_NAME:
+            Ref: IncidentsTable
+          NODE_OPTIONS: ' --enable-source-maps'
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /metrics
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - src/handlers/get-metrics.ts
+        Minify: true
+        Sourcemap: true
+        Target: es2020
+      SamResourceId: GetMetricsFunction
   UpdateIncidentFunction:
     Type: AWS::Serverless::Function
     Properties:
