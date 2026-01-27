@@ -1,6 +1,6 @@
 import { DEMO_MODE, API_BASE_URL } from "./config";
 import { fetchJson } from "./utils";
-import type { IncidentsResponse, Metrics } from "./types";
+import type { IncidentsResponse, Metrics, Incident } from "./types"; 
 
 export async function getMetrics(days = 7): Promise<Metrics> {
   if (DEMO_MODE) return fetchJson<Metrics>("/demo/metrics.json");
@@ -24,4 +24,23 @@ export async function getIncidents(params: {
     qs.set("lastKey", params.lastKey);
 
   return fetchJson<IncidentsResponse>(`${API_BASE_URL}/incidents?${qs.toString()}`);
+}
+
+export async function updateIncident(
+  incidentId: string,
+  action: "ACK" | "RESOLVE"
+): Promise<{ item: Incident }> {
+  if (DEMO_MODE) {
+    // In demo mode we don’t mutate data; UI should disable actions anyway
+    throw new Error("Demo mode: backend is paused");
+  }
+
+  const res = await fetch(`${API_BASE_URL}/incidents/${encodeURIComponent(incidentId)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action }),
+  });
+
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
 }
