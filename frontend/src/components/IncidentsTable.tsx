@@ -25,7 +25,7 @@ export function IncidentsTable({
             <Th>Summary</Th>
             <Th>Ack</Th>
             <Th>Resolved</Th>
-            <Th>Actions</Th>
+            <Th className="actionsCol">Actions</Th>
           </tr>
         </thead>
 
@@ -52,7 +52,7 @@ export function IncidentsTable({
                   <Td>{it.acknowledgedAt ? "✅" : "—"}</Td>
                   <Td>{it.resolvedAt ? "✅" : "—"}</Td>
 
-                  <Td>
+                  <Td className="actionsCol">
                     <div className="rowActions">
                       <button
                         className="rowActionBtn"
@@ -95,9 +95,16 @@ export function IncidentsTable({
   );
 }
 
-function Th({ children }: { children: any }) {
+function Th({
+  children,
+  className,
+}: {
+  children: any;
+  className?: string;
+}) {
   return (
     <th
+      className={className}
       style={{
         textAlign: "left",
         padding: 10,
@@ -111,6 +118,16 @@ function Th({ children }: { children: any }) {
   );
 }
 
-function Td({ children }: { children: any }) {
-  return <td style={{ padding: 10, borderTop: "1px solid #eee" }}>{children}</td>;
+function Td({
+  children,
+  className,
+}: {
+  children: any;
+  className?: string;
+}) {
+  return (
+    <td className={className} style={{ padding: 10, borderTop: "1px solid #eee" }}>
+      {children}
+    </td>
+  );
 }

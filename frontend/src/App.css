@@ -71,6 +71,10 @@
   text-overflow: ellipsis;
 }
 
+.incidentsTableArea .actionsCol {
+  width: 160px;
+}
+
 @media (max-width: 640px) {
   .incidentsPanel {
     height: 60vh;
