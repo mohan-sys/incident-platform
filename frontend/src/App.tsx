@@ -163,8 +163,8 @@ export default function App() {
       </section>
 
       {/* ---------- Incidents ---------- */}
-      <section style={{ marginTop: 22 }}>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <section className="incidentsPanel" style={{ marginTop: 22 }}>
+        <div className="incidentsHeader" style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <h3 style={{ margin: 0 }}>Incidents</h3>
 
           <label style={{ fontSize: 14 }}>
@@ -195,26 +195,37 @@ export default function App() {
             </select>
           </label>
 
-          <button onClick={() => loadIncidents(true)} style={{ marginLeft: "auto" }}>
+          <button
+            onClick={() => loadIncidents(true)}
+            style={{ marginLeft: "auto" }}
+          >
             Refresh
           </button>
         </div>
 
-        {incErr && <p style={{ color: "crimson" }}>Incidents error: {incErr}</p>}
+        {incErr && (
+          <p style={{ color: "crimson", marginTop: 8 }}>Incidents error: {incErr}</p>
+        )}
 
-        <IncidentsTable
-          items={items}
-          demoMode={DEMO_MODE}
-          busyId={busyId}
-          onAck={handleAck}
-          onResolve={handleResolve}
-        />
+        <div className="incidentsTableArea">
+          <IncidentsTable
+            items={items}
+            demoMode={DEMO_MODE}
+            busyId={busyId}
+            onAck={handleAck}
+            onResolve={handleResolve}
+          />
+        </div>
 
-        <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+        <div className="incidentsFooter" style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
           <button
             disabled={DEMO_MODE || !lastKey}
             title={
-              DEMO_MODE ? "Demo mode uses sample data" : !lastKey ? "No more results" : ""
+              DEMO_MODE
+                ? "Demo mode uses sample data"
+                : !lastKey
+                ? "No more results"
+                : ""
             }
             onClick={() => loadIncidents(false)}
           >

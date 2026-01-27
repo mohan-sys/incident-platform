@@ -40,3 +40,31 @@
 .read-the-docs {
   color: #888;
 }
+
+/* ---------- Incidents panel: fixed height + internal scroll (prevents layout jump on filtering) ---------- */
+.incidentsPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  /* reserve space but keep responsive */
+  min-height: clamp(360px, 45vh, 640px);
+}
+
+.incidentsTableArea {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+}
+
+/* Ensure table uses full width inside the scroll area */
+.incidentsTableArea table {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .incidentsPanel {
+    min-height: 55vh;
+  }
+}
