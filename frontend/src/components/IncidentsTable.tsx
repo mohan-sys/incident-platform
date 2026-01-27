@@ -28,6 +28,7 @@ export function IncidentsTable({
             <Th>Actions</Th>
           </tr>
         </thead>
+
         <tbody>
           {items.length === 0 ? (
             <tr>
@@ -50,9 +51,11 @@ export function IncidentsTable({
                   <Td>{it.summary}</Td>
                   <Td>{it.acknowledgedAt ? "✅" : "—"}</Td>
                   <Td>{it.resolvedAt ? "✅" : "—"}</Td>
+
                   <Td>
-                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <div className="rowActions">
                       <button
+                        className="rowActionBtn"
                         disabled={demoMode || busy || !canAck}
                         title={
                           demoMode
@@ -67,6 +70,7 @@ export function IncidentsTable({
                       </button>
 
                       <button
+                        className="rowActionBtn"
                         disabled={demoMode || busy || !canResolve}
                         title={
                           demoMode

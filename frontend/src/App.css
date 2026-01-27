@@ -76,3 +76,25 @@
     height: 60vh;
   }
 }
+
+/* ---------- Actions: keep ACK + RESOLVE side-by-side ---------- */
+.rowActions {
+  display: inline-flex;      /* inline so it doesn't stretch full width */
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;         /* IMPORTANT: prevents top/bottom stacking */
+}
+
+.rowActionBtn {
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 10px;
+}
+
+/* On very small screens, allow wrapping if absolutely needed */
+@media (max-width: 420px) {
+  .rowActions {
+    flex-wrap: wrap;
+  }
+}
