@@ -1,6 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { corsHeaders } from "../../frontend/src/lib/cors";
+import { corsHeaders } from "../lib/cors";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = process.env.INCIDENTS_TABLE_NAME!;

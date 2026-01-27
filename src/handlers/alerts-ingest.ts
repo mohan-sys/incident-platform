@@ -1,5 +1,5 @@
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import { corsHeaders } from "../../frontend/src/lib/cors";
+import { corsHeaders } from "../lib/cors";
 
 /**
  * SQS client (uses IAM role provided by Lambda)
