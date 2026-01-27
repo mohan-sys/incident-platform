@@ -5,6 +5,44 @@
   text-align: center;
 }
 
+.appContainer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.appHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sectionHeader {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sectionHeader .pushRight {
+  margin-left: auto;
+}
+
+.fieldLabel {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metricsGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -71,13 +109,71 @@
   text-overflow: ellipsis;
 }
 
+.incidentsTableArea .incidentsTh {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 12px;
+  color: #666;
+}
+
+.incidentsTableArea .incidentsTd {
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
+
+.incidentsTableArea .emptyCell {
+  padding: 12px;
+  border-top: 1px solid #eee;
+}
+
 .incidentsTableArea .actionsCol {
   width: 160px;
 }
 
+.incidentsFooter {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
 @media (max-width: 640px) {
+  .appContainer {
+    padding: 16px;
+  }
+
+  .sectionHeader .pushRight {
+    margin-left: 0;
+  }
+
+  .sectionHeader button {
+    width: 100%;
+  }
+
   .incidentsPanel {
     height: 60vh;
+  }
+}
+
+@media (max-width: 900px) {
+  .metricsGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .metricsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .incidentsTableArea .incidentsTh,
+  .incidentsTableArea .incidentsTd {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
   }
 }
 

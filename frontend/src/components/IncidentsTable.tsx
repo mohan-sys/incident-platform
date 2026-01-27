@@ -32,7 +32,7 @@ export function IncidentsTable({
         <tbody>
           {items.length === 0 ? (
             <tr>
-              <td colSpan={8} style={{ padding: 12, borderTop: "1px solid #eee" }}>
+              <td colSpan={8} className="emptyCell">
                 No incidents
               </td>
             </tr>
@@ -95,22 +95,13 @@ export function IncidentsTable({
   );
 }
 
-function Th({
-  children,
-  className,
-}: {
-  children: any;
-  className?: string;
-}) {
+function Th({ children, className }: { children: any; className?: string }) {
+  const classes = ["incidentsTh", className].filter(Boolean).join(" ");
   return (
     <th
-      className={className}
+      className={classes}
       style={{
         textAlign: "left",
-        padding: 10,
-        borderBottom: "1px solid #eee",
-        fontSize: 12,
-        color: "#666",
       }}
     >
       {children}
@@ -118,15 +109,10 @@ function Th({
   );
 }
 
-function Td({
-  children,
-  className,
-}: {
-  children: any;
-  className?: string;
-}) {
+function Td({ children, className }: { children: any; className?: string }) {
+  const classes = ["incidentsTd", className].filter(Boolean).join(" ");
   return (
-    <td className={className} style={{ padding: 10, borderTop: "1px solid #eee" }}>
+    <td className={classes}>
       {children}
     </td>
   );

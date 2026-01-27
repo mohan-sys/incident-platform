@@ -88,8 +88,8 @@ export default function App() {
   }, [statusFilter, severityFilter]);
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 24 }}>
-      <header style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <div className="appContainer">
+      <header className="appHeader">
         <h2 style={{ margin: 0 }}>Incident Platform</h2>
         <span
           style={{
@@ -110,15 +110,14 @@ export default function App() {
 
       {/* ---------- Metrics ---------- */}
       <section style={{ marginTop: 18 }}>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="sectionHeader">
           <h3 style={{ margin: 0 }}>Metrics</h3>
 
-          <label style={{ fontSize: 14 }}>
+          <label className="fieldLabel">
             Window:
             <select
               value={days}
               onChange={(e) => setDays(Number(e.target.value))}
-              style={{ marginLeft: 8 }}
             >
               <option value={1}>1 day</option>
               <option value={7}>7 days</option>
@@ -126,7 +125,7 @@ export default function App() {
             </select>
           </label>
 
-          <button onClick={loadMetrics} style={{ marginLeft: "auto" }}>
+          <button onClick={loadMetrics} className="pushRight">
             Refresh
           </button>
         </div>
@@ -135,14 +134,7 @@ export default function App() {
           <p style={{ color: "crimson" }}>Metrics error: {metricsErr}</p>
         )}
 
-        <div
-          style={{
-            marginTop: 12,
-            display: "grid",
-            gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-            gap: 10,
-          }}
-        >
+        <div className="metricsGrid">
           <KpiCard label="Total" value={metrics?.totalIncidents ?? "—"} />
           <KpiCard label="Open" value={metrics?.openIncidents ?? "—"} />
           <KpiCard
@@ -164,15 +156,14 @@ export default function App() {
 
       {/* ---------- Incidents ---------- */}
       <section className="incidentsPanel" style={{ marginTop: 22 }}>
-        <div className="incidentsHeader" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="incidentsHeader sectionHeader">
           <h3 style={{ margin: 0 }}>Incidents</h3>
 
-          <label style={{ fontSize: 14 }}>
+          <label className="fieldLabel">
             Status:
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              style={{ marginLeft: 8 }}
             >
               <option value="">All</option>
               <option value="OPEN">OPEN</option>
@@ -180,12 +171,11 @@ export default function App() {
             </select>
           </label>
 
-          <label style={{ fontSize: 14 }}>
+          <label className="fieldLabel">
             Severity:
             <select
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              style={{ marginLeft: 8 }}
             >
               <option value="">All</option>
               <option value="CRITICAL">CRITICAL</option>
@@ -195,10 +185,7 @@ export default function App() {
             </select>
           </label>
 
-          <button
-            onClick={() => loadIncidents(true)}
-            style={{ marginLeft: "auto" }}
-          >
+          <button onClick={() => loadIncidents(true)} className="pushRight">
             Refresh
           </button>
         </div>
@@ -217,7 +204,7 @@ export default function App() {
           />
         </div>
 
-        <div className="incidentsFooter" style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+        <div className="incidentsFooter">
           <button
             disabled={DEMO_MODE || !lastKey}
             title={
