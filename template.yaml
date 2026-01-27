@@ -3,6 +3,12 @@ Description: incident-platform
 Transform:
   - AWS::Serverless-2016-10-31
 
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+        - W3660
+
 Globals:
   Function:
     Runtime: nodejs20.x
@@ -17,6 +23,37 @@ Globals:
         POWERTOOLS_SERVICE_NAME: incident-platform
 
 Resources:
+  # ---------- API Gateway (explicit, with CORS) ----------
+  IncidentApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PATCH,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+  # Ensure CORS headers are returned even for 4XX/5XX errors (so browsers don't report opaque CORS failures)
+  ApiGatewayResponseDefault4XX:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref IncidentApi
+      ResponseType: DEFAULT_4XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,OPTIONS'"
+
+  ApiGatewayResponseDefault5XX:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId: !Ref IncidentApi
+      ResponseType: DEFAULT_5XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+        gatewayresponse.header.Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+        gatewayresponse.header.Access-Control-Allow-Methods: "'GET,POST,PATCH,OPTIONS'"
+
   # ---------- Data ----------
   IncidentsTable:
     Type: AWS::DynamoDB::Table
@@ -89,6 +126,7 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId: !Ref IncidentApi
             Path: /alerts
             Method: POST
     Metadata:
@@ -147,6 +185,7 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId: !Ref IncidentApi
             Path: /incidents
             Method: GET
     Metadata:
@@ -174,6 +213,7 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId: !Ref IncidentApi
             Path: /metrics
             Method: GET
     Metadata:
@@ -201,6 +241,7 @@ Resources:
         Api:
           Type: Api
           Properties: 
+            RestApiId: !Ref IncidentApi
             Path: /incidents/{id}
             Method: PATCH
     Metadata:
@@ -215,7 +256,7 @@ Resources:
 Outputs:
   ApiUrl:
     Description: API Gateway endpoint base URL
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod"
+    Value: !Sub "https://${IncidentApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod"
 
   AlertsQueueUrl:
     Description: SQS queue URL used by ingest function

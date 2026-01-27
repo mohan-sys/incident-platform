@@ -4,8 +4,8 @@ import type { IncidentsResponse, Metrics, Incident } from "./types";
 
 export async function getMetrics(days = 7): Promise<Metrics> {
   if (DEMO_MODE) return fetchJson<Metrics>("/demo/metrics.json");
-  // backend expects trailing slash for /metrics
-  return fetchJson<Metrics>(`${API_BASE_URL}/metrics/?days=${days}`);
+  // backend endpoint is /metrics (no trailing slash)
+  return fetchJson<Metrics>(`${API_BASE_URL}/metrics?days=${days}`);
 }
 
 export async function getIncidents(params: {

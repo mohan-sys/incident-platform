@@ -2,6 +2,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: incident-platform
 Transform:
 - AWS::Serverless-2016-10-31
+Metadata:
+  cfn-lint:
+    config:
+      ignore_checks:
+      - W3660
 Globals:
   Function:
     Runtime: nodejs20.x
@@ -15,6 +20,34 @@ Globals:
       Variables:
         POWERTOOLS_SERVICE_NAME: incident-platform
 Resources:
+  IncidentApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: '''GET,POST,PATCH,OPTIONS'''
+        AllowHeaders: '''Content-Type,Authorization'''
+        AllowOrigin: '''*'''
+  ApiGatewayResponseDefault4XX:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId:
+        Ref: IncidentApi
+      ResponseType: DEFAULT_4XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: '''*'''
+        gatewayresponse.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+        gatewayresponse.header.Access-Control-Allow-Methods: '''GET,POST,PATCH,OPTIONS'''
+  ApiGatewayResponseDefault5XX:
+    Type: AWS::ApiGateway::GatewayResponse
+    Properties:
+      RestApiId:
+        Ref: IncidentApi
+      ResponseType: DEFAULT_5XX
+      ResponseParameters:
+        gatewayresponse.header.Access-Control-Allow-Origin: '''*'''
+        gatewayresponse.header.Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+        gatewayresponse.header.Access-Control-Allow-Methods: '''GET,POST,PATCH,OPTIONS'''
   IncidentsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -92,6 +125,8 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId:
+              Ref: IncidentApi
             Path: /alerts
             Method: POST
     Metadata:
@@ -163,6 +198,8 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId:
+              Ref: IncidentApi
             Path: /incidents
             Method: GET
     Metadata:
@@ -193,6 +230,8 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId:
+              Ref: IncidentApi
             Path: /metrics
             Method: GET
     Metadata:
@@ -223,6 +262,8 @@ Resources:
         Api:
           Type: Api
           Properties:
+            RestApiId:
+              Ref: IncidentApi
             Path: /incidents/{id}
             Method: PATCH
     Metadata:
@@ -238,7 +279,7 @@ Outputs:
   ApiUrl:
     Description: API Gateway endpoint base URL
     Value:
-      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod
+      Fn::Sub: https://${IncidentApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod
   AlertsQueueUrl:
     Description: SQS queue URL used by ingest function
     Value:

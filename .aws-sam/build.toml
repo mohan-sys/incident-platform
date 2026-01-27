@@ -33,6 +33,9 @@ EntryPoints = ["src/handlers/alerts-ingest.ts"]
 
 
 
+
+
+
 [function_build_definitions.22020a3c-ce27-4fd8-968c-b23d60765e35]
 codeuri = "/Users/mohan-sys/Documents/developer/AWS/incident-platform/incident-platform"
 runtime = "nodejs20.x"
@@ -50,6 +53,9 @@ Minify = true
 Target = "es2020"
 Sourcemap = true
 EntryPoints = ["src/handlers/alerts-processor.ts"]
+
+
+
 
 
 
@@ -96,6 +102,9 @@ EntryPoints = ["src/handlers/get-incidents.ts"]
 
 
 
+
+
+
 [function_build_definitions.e91e8df5-db0a-4baf-a1ab-01ffa7f5ac82]
 codeuri = "/Users/mohan-sys/Documents/developer/AWS/incident-platform/incident-platform"
 runtime = "nodejs20.x"
@@ -126,6 +135,9 @@ EntryPoints = ["src/handlers/update-incident.ts"]
 
 
 
+
+
+
 [function_build_definitions.e564de29-fd0c-4e95-a92c-d504fbd27097]
 codeuri = "/Users/mohan-sys/Documents/developer/AWS/incident-platform/incident-platform"
 runtime = "nodejs20.x"
@@ -143,6 +155,9 @@ Minify = true
 Target = "es2020"
 Sourcemap = true
 EntryPoints = ["src/handlers/get-metrics.ts"]
+
+
+
 
 
 [layer_build_definitions]
