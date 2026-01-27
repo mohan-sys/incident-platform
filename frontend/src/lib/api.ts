@@ -17,8 +17,13 @@ export async function getIncidents(params: {
   if (DEMO_MODE) return fetchJson<IncidentsResponse>("/demo/incidents.json");
 
   const qs = new URLSearchParams();
-  if (params.status) qs.set("status", params.status);
-  if (params.severity) qs.set("severity", params.severity);
+  if (params.status && params.status.trim() !== "") {
+    qs.set("status", params.status);
+    }
+
+  if (params.severity && params.severity.trim() !== "") {
+    qs.set("severity", params.severity);
+    }
   if (params.limit) qs.set("limit", String(params.limit));
   if (params.lastKey !== undefined && params.lastKey !== null)
     qs.set("lastKey", params.lastKey);
