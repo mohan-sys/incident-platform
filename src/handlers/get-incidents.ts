@@ -1,5 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { corsHeaders } from "../../frontend/src/lib/cors";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = process.env.INCIDENTS_TABLE_NAME!;
@@ -22,6 +23,10 @@ function parseLastKey(raw: any) {
 }
 
 export const handler = async (event: any) => {
+  // CORS preflight
+  if (event?.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: corsHeaders, body: "" };
+  }
   const qs = event?.queryStringParameters ?? {};
 
   const status = qs.status; // OPEN | RESOLVED (optional)
@@ -81,6 +86,7 @@ export const handler = async (event: any) => {
 
   return {
     statusCode: 200,
+    headers: corsHeaders,
     body: JSON.stringify({ items: res.Items ?? [], lastKey: nextKey }),
   };
 };

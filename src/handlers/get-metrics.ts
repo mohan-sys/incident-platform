@@ -1,5 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { corsHeaders } from "../../frontend/src/lib/cors";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = process.env.INCIDENTS_TABLE_NAME!;
@@ -11,6 +12,11 @@ function parseDays(raw: any, fallback = 7) {
 }
 
 export const handler = async (event: any) => {
+  // CORS preflight
+  if (event?.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: corsHeaders, body: "" };
+  }
+
   const qs = event?.queryStringParameters ?? {};
 
   // If days is NOT provided -> all-time metrics
@@ -83,6 +89,7 @@ export const handler = async (event: any) => {
 
   return {
     statusCode: 200,
+    headers: corsHeaders,
     body: JSON.stringify({
       windowDays: days, // null means all-time
       totalIncidents: total,

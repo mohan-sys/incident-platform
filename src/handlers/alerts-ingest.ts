@@ -1,4 +1,5 @@
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+import { corsHeaders } from "../../frontend/src/lib/cors";
 
 /**
  * SQS client (uses IAM role provided by Lambda)
@@ -25,6 +26,11 @@ type AlertPayload = {
  * Receives alerts and pushes them to SQS for async processing
  */
 export const handler = async (event: any) => {
+  // CORS preflight
+  if (event?.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: corsHeaders, body: "" };
+  }
+
   try {
     const body = event?.body ? JSON.parse(event.body) : null;
 
@@ -32,6 +38,7 @@ export const handler = async (event: any) => {
     if (!body?.service || !body?.severity || !body?.message) {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({
           error: "Missing required fields: service, severity, message",
         }),
@@ -58,6 +65,7 @@ export const handler = async (event: any) => {
 
     return {
       statusCode: 202,
+      headers: corsHeaders,
       body: JSON.stringify({
         status: "queued",
         message: "Alert accepted for processing",
@@ -68,6 +76,7 @@ export const handler = async (event: any) => {
 
     return {
       statusCode: 500,
+      headers: corsHeaders,
       body: JSON.stringify({
         error: "Internal server error",
       }),

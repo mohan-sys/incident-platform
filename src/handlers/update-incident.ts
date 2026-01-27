@@ -1,5 +1,6 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { corsHeaders } from "../../frontend/src/lib/cors";
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const tableName = process.env.INCIDENTS_TABLE_NAME!;
@@ -7,18 +8,28 @@ const tableName = process.env.INCIDENTS_TABLE_NAME!;
 type Action = "ACK" | "RESOLVE";
 
 export const handler = async (event: any) => {
+  // CORS preflight
+  if (event?.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: corsHeaders, body: "" };
+  }
+
   try {
     const id = event?.pathParameters?.id;
     const body = event?.body ? JSON.parse(event.body) : null;
     const action: Action | undefined = body?.action;
 
     if (!id) {
-      return { statusCode: 400, body: JSON.stringify({ error: "Missing incident id" }) };
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({ error: "Missing incident id" }),
+      };
     }
 
     if (action !== "ACK" && action !== "RESOLVE") {
       return {
         statusCode: 400,
+        headers: corsHeaders,
         body: JSON.stringify({ error: 'action must be "ACK" or "RESOLVE"' }),
       };
     }
@@ -49,9 +60,17 @@ export const handler = async (event: any) => {
       })
     );
 
-    return { statusCode: 200, body: JSON.stringify({ item: result.Attributes }) };
+    return {
+      statusCode: 200,
+      headers: corsHeaders,
+      body: JSON.stringify({ item: result.Attributes }),
+    };
   } catch (err) {
     console.error("Update incident failed", err);
-    return { statusCode: 500, body: JSON.stringify({ error: "Internal server error" }) };
+    return {
+      statusCode: 500,
+      headers: corsHeaders,
+      body: JSON.stringify({ error: "Internal server error" }),
+    };
   }
 };
