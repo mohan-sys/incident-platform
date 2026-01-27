@@ -33,38 +33,46 @@
   }
 }
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-/* ---------- Incidents panel: fixed height + internal scroll (prevents layout jump on filtering) ---------- */
+/* ---------- Incidents panel: stable height + internal scroll (prevents layout jump on filtering) ---------- */
 .incidentsPanel {
   display: flex;
   flex-direction: column;
   gap: 12px;
 
-  /* reserve space but keep responsive */
-  min-height: clamp(360px, 45vh, 640px);
+  /* fixed but responsive height so the page doesn't "breathe" when filters change */
+  height: clamp(360px, 45vh, 640px);
+
+  /* only the table area should scroll */
+  overflow: hidden;
 }
 
 .incidentsTableArea {
   flex: 1;
+
+  /* CRITICAL for flex + scrolling: lets this area shrink without resizing parent */
+  min-height: 0;
+
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 16px;
 }
 
-/* Ensure table uses full width inside the scroll area */
+/* Ensure table uses full width and stable columns inside the scroll area */
 .incidentsTableArea table {
   width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.incidentsTableArea th,
+.incidentsTableArea td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 640px) {
   .incidentsPanel {
-    min-height: 55vh;
+    height: 60vh;
   }
 }
