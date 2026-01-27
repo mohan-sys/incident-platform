@@ -96,7 +96,10 @@ export default function App() {
             fontSize: 12,
             padding: "4px 10px",
             borderRadius: 999,
-            border: "1px solid #ddd",
+            border: "1px solid #666",
+            background: DEMO_MODE ? "#fff7e6" : "#eaffea",
+            color: "#111",
+            fontWeight: 600,
           }}
         >
           {DEMO_MODE ? "DEMO MODE (backend paused)" : "LIVE MODE"}
